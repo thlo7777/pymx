@@ -80,8 +80,6 @@ class WechatMobileController extends ControllerBase implements ContainerInjectio
         return $response;
     }
 
-    public function HotelMainPage() {
-    }
 
     public function GetRender() {
         $list[] = $this->t("First number was @number.", ['@number' => 1]);

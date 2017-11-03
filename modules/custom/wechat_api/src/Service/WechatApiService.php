@@ -6,6 +6,7 @@ namespace Drupal\wechat_api\Service;
 // These classes are used to implement a stream wrapper class.
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * wechat api service for all wechat api interface and include curl http interface
@@ -227,6 +228,127 @@ class WechatApiService {
      *  $watchdog_title: page name
      */
     public function wechat_api_oauth2_get_accss_token($code, $scope = 'snsapi_base', $state, $url, $watchdog_title) {
+
+        if($code == '') {
+            $this->logger->error($watchdog_title . ": code is empty");
+            return null; 
+        }
+
+        $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get oauth2 access_token');
+        $appID = $this->configFactory->get('dld.wxapp.config')->get('AppID');
+        $appSec = $this->configFactory->get('dld.wxapp.config')->get('AppSecret');
+        $req_url = t( $api_interface, array('@APPID' => $token, '@APPSECRET' => $appSec, '@CODE' => $code) )->render();
+
+        $result = $this->wechat_php_curl_https_get($req_url);
+
+        if ( !$result ) {
+            $this->logger->error(__FUNCTION__ . ": can't get result");
+            return null;
+        }
+
+        $json_value = json_decode($result);
+        if(isset($json_value->errcode)) {
+
+            global $base_url;
+            //if 40029 happend, because browser history store last oauth2 redirect url, and contains old code. so
+            //resend oauth2 redirect ulr to this page, then ok. don't forget drupal_exit :)
+            if ($json_value->errcode == "40029" && preg_match('/invalid code/', $json_value->errmsg)) {
+                $this->logger->info($watchdog_title . ": redirect 40029 error");
+
+                $api_interface = $this->configFactory->get('dld.wxapp.config')->get('oauth2 redirect request');
+                $redirect_40029_req_url = t( $api_interface, array(
+                    '@APPID' => $token,
+                    '@URL' => $url,
+                    '@SNSAPI' => $scope,
+                    '@STATE' => $state))->render();
+
+                $response = new RedirectResponse($redirect_40029_req_url);
+                $response->send();
+                return null;
+            } else if ($json_value->errcode == "40163" && preg_match('/code been used/', $json_value->errmsg)) {
+                //if 40163 happend, same like 40029 
+                //resend oauth2 redirect ulr to this page, then ok. don't forget drupal_exit :)
+                $this->logger->info($watchdog_title . ": redirect 40163 error");
+
+                $api_interface = $this->configFactory->get('dld.wxapp.config')->get('oauth2 redirect request');
+                $redirect_40163_req_url = t( $api_interface, array(
+                    '@APPID' => $token,
+                    '@URL' => $url,
+                    '@SNSAPI' => $scope,
+                    '@STATE' => $state))->render();
+
+                $response = new RedirectResponse($redirect_40029_req_url);
+                $response->send();
+                return null;
+            } else {
+                $this->logger->error($watchdog_title . ": error code: @error and errmsg: @errmsg at @line in @filename", 
+                    array(
+                    '@error' => $json_value->errcode,
+                    '@errmsg' => $json_value->errmsg,
+                    '@line' => __LINE__,
+                    '@filename' => __FILE__,
+                    ),
+                );
+
+                return null;
+            }
+        }
+
+        if ($scope == 'snsapi_base') {
+            //finished it, and only return openid
+            //return value
+            //{ "access_token":"ACCESS_TOKEN",    
+            //"expires_in":7200,    
+            //"refresh_token":"REFRESH_TOKEN",    
+            //"openid":"OPENID",    
+            //"scope":"SCOPE" } 
+            return $json_value;
+        }
+
+        $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get oauth2 user info');
+        //get user info
+        $req_url = t( $api_interface, array(
+            '@ACCESS_TOKEN' => $json_value->access_token,
+            '@OPENID' => $json_value->openid))->render();
+
+        $result = $this->wechat_php_curl_https_get($req_url);
+        if ($result == Null) {
+            $this->logger->error($watchdog_title . ": error: get user info return null in @line line:@filename'", 
+                array(
+                '@line' => __LINE__,
+                '@filename' => __FILE__,
+                ),
+            );
+            return null;
+        }
+
+        $json_value = json_decode($result);
+        if(isset($json_value->errcode)){
+            $this->logger->error($watchdog_title . ": can not get wechat user info code: @error and errmsg: @errmsg at @line in @filename", 
+                array(
+                '@error' => $json_value->errcode,
+                '@errmsg' => $json_value->errmsg,
+                '@line' => __LINE__,
+                '@filename' => __FILE__,
+                ),
+            );
+            return null;
+        }
+
+    //reuturn value
+
+    //{"openid":" OPENID",  
+    // "nickname": NICKNAME,   
+    // "sex":"1",   
+    // "province":"PROVINCE"   
+    // "city":"CITY",   
+    // "country":"COUNTRY",    
+    // "headimgurl":    "http://wx.qlogo.cn/mmopen/g3MonUZtNHkdmzicIlibx6iaFqAc56vxLSUfpb6n5WKSYVY0ChQKkiaJSgQ1dZuTOgvLLrhJbERQQ
+    //4eMsv84eavHiaiceqxibJxCfHe/46",  
+    //"privilege":[ "PRIVILEGE1" "PRIVILEGE2"     ],    
+    // "unionid": "o6_bmasdasdsad6_2sgVt7hMZOPfL" 
+    //} 
+        return $json_value;
     }
 
     /**
