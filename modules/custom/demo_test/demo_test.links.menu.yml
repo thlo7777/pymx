@@ -1,8 +1,0 @@
-# Define default links for this module.
-demo_test.dtform:
-  title: 测试Form
-  description: A form for test anything.
-  route_name: demo_test.dtform
-  menu_name: main
-  weight: -9
-
