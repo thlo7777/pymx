@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @file
+ * Examples demonstrating how to implement and invoke hooks.
+ */
+
+use Drupal\wechat_api\Service\WechatApiService;
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implement hook_ENTITY_TYPE_update()
+ **/
+function wechat_service_node_update(EntityInterface $entity) {
+
+    /**
+     * update/save wechat server config in configuration
+     **/
+    if ($entity->bundle() == "wechat_server_configure") {
+
+        $appID = $entity->field_text->value;
+        $appSec = $entity->field_text2->value;
+        $wx_token = $entity->field_text3->value;
+        $EncodingAESKey = $entity->field_text4->value;
+        $dld_app_config = \Drupal::service('config.factory')->getEditable('dld.wxapp.config');
+
+        $dld_app_config->set('AppID', $appID);
+        $dld_app_config->set('AppSecret', $appSec);
+        $dld_app_config->set('WX Token', $wx_token);
+        $dld_app_config->set('EncodingAESKey', $EncodingAESKey);
+        $dld_app_config->save();
+        
+    }
+
+    /**
+     * update wechat api message interface when save or update
+     **/
+    if ($entity->bundle() == "wechat_api_interface") {
+
+        $node_arr = $entity->toArray();
+
+        $ref_ids = $node_arr['field_ref_wechat_api'];
+
+        foreach ($ref_ids as $key => $id) {
+            $node = \Drupal::entityManager()->getStorage('node')->load($id['target_id'])->toArray();
+
+//            \Drupal::logger('demo_hooks_node_update')->notice(
+//                '<pre>@data</pre>', array('@data' => print_r($node, TRUE)));
+            $dld_app_config = \Drupal::service('config.factory')->getEditable('dld.wxapp.config');
+            $dld_app_config->set($node['title'][0]['value'], $node['field_text2'][0]['value']);
+            $dld_app_config->save();
+        }
+    }
+
+    /**
+     * update wechat custom menu when save or update
+     **/
+    if ($entity->bundle() == "wechat_custom_menu") {
+
+        \Drupal::service('service.wechatapi')->create_custom_menu($entity->body->value);
+        \Drupal::logger('wechat_custom_menu')->notice('<pre>@data</pre>', array('@data' => print_r('create menu', TRUE)));
+    }
+
+}
+
+/**
+ * @} End of "defgroup demo_hooks".
+ */

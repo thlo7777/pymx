@@ -1,0 +1,4 @@
+name: demo test
+type: module
+description: any test for and print
+core: '8.x'

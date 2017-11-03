@@ -1,0 +1,4 @@
+access get wechat menu:
+  description: 'get wechat menu.'
+  title: 'get wechat menu'
+  restrict access: TRUE

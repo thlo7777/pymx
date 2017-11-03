@@ -1,0 +1,7 @@
+# Define get menu links for this module.
+wechat_service.get.menu:
+  title: 微信生效菜单
+  description: get wechat menu.
+  route_name: wechat_service.getmenu
+  menu_name: main
+  weight: -9

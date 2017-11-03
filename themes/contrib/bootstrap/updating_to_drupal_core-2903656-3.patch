@@ -1,0 +1,39 @@
+diff --git a/templates/menu/menu--account.html.twig b/templates/menu/menu--account.html.twig
+index d66d5cb..4245b63 100644
+--- a/templates/menu/menu--account.html.twig
++++ b/templates/menu/menu--account.html.twig
+@@ -41,7 +41,7 @@
+       %}
+       {% if menu_level == 0 and item.is_expanded %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+-        <a href="{{ item.url }}" class="dropdown-toggle" data-target="#" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
++        <a href="{{ item.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
+       {% else %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+         {{ link(item.title, item.url) }}
+diff --git a/templates/menu/menu--main.html.twig b/templates/menu/menu--main.html.twig
+index 20f5a85..46bc7fc 100644
+--- a/templates/menu/menu--main.html.twig
++++ b/templates/menu/menu--main.html.twig
+@@ -41,7 +41,7 @@
+       %}
+       {% if menu_level == 0 and item.is_expanded %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+-        <a href="{{ item.url }}" class="dropdown-toggle" data-target="#" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
++        <a href="{{ item.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
+       {% else %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+         {{ link(item.title, item.url) }}
+diff --git a/templates/menu/menu.html.twig b/templates/menu/menu.html.twig
+index cbc5be8..95fd300 100644
+--- a/templates/menu/menu.html.twig
++++ b/templates/menu/menu.html.twig
+@@ -41,7 +41,7 @@
+       %}
+       {% if menu_level == 0 and item.is_expanded %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+-        <a href="{{ item.url }}" class="dropdown-toggle" data-target="#" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
++        <a href="{{ item.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ item.title }} <span class="caret"></span></a>
+       {% else %}
+         <li{{ item.attributes.addClass(item_classes) }}>
+         {{ link(item.title, item.url) }}

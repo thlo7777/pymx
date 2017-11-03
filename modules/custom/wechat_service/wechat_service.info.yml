@@ -1,0 +1,4 @@
+name: 'wechat service'
+type: module
+description: 'wechat service interface and get/post wechat request and response message'
+core: 8.x

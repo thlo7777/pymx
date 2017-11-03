@@ -1,0 +1,4 @@
+name: wechat api interface
+type: module
+description: Provides all wechat api interface
+core: '8.x'

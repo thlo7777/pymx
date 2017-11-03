@@ -1,0 +1,5 @@
+name: dld wxapp cron
+type: module
+description: 'Implemented hook_cron() and related features'
+package: 'dld custom modules'
+core: 8.x

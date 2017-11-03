@@ -1,0 +1,8 @@
+/**
+ * Place your custom styles here.
+ */
+
+.url-api-text-wrapper > .field > .field--item {
+    word-wrap: break-word;
+}
+

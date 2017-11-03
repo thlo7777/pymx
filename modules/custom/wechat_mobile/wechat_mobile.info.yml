@@ -1,0 +1,4 @@
+name: 'wechat mobile'
+type: module
+description: 'pymxw wechat mobile client'
+core: '8.x'

@@ -1,0 +1,18 @@
+#wechat access wechat server entry
+wechat_service:
+    path: '/wechat-service'
+    defaults:
+        _controller: '\Drupal\wechat_service\Controller\WechatServiceController::access'
+    requirements:
+        _access: 'TRUE'
+
+
+# get wechat menu from
+wechat_service.getmenu:
+  path: '/wechat-get-menu'
+  defaults:
+    _form:  '\Drupal\wechat_service\Form\GetMenuForm'
+    _title: '查询微信菜单'
+  requirements:
+    _permission: 'access get wechat menu'
+
