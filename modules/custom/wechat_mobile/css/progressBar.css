@@ -1,0 +1,39 @@
+#upload-progressbar .modal-dialog {
+    position:absolute;
+    top:50% !important;
+    transform: translate(0, -50%) !important;
+    -ms-transform: translate(0, -50%) !important;
+    -webkit-transform: translate(0, -50%) !important;
+    margin:auto 5%;
+    width:90%;
+    height:20%;
+}
+#upload-progressbar .modal-content {
+    /*min-height:100%;*/
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+}
+#upload-progressbar .modal-body {
+    position:absolute;
+    top:45px;
+    bottom:45px;
+    left:0;
+    right:0;
+    overflow-y:auto;
+}
+#upload-progressbar .modal-footer {
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+}
+#upload-progressbar .progress > .progress-completed {
+    position: absolute;
+    right: 0px;
+    font-weight: 700;
+    padding: 2px 25px;
+    line-height: 1.2;
+}

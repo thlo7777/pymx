@@ -1,0 +1,10 @@
+.loader-on {
+    display: block;
+    position: fixed;
+    z-index: 9999;
+}
+
+.loader-off {
+    display: none;
+}
+

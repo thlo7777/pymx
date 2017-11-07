@@ -6,6 +6,7 @@ namespace Drupal\wechat_api\Service;
 // These classes are used to implement a stream wrapper class.
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
+use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -106,6 +107,32 @@ class WechatApiService {
     }
 
     public function get_jsapi_ticket() {
+        $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get jsapi ticket');
+        $token = $this->configFactory->get('dld.wxapp.config')->get('access_token');
+        $token_url = t( $api_interface, array( '@ACCESS_TOKEN' => $token ) )->render();
+
+        $result = $this->wechat_php_curl_https_get($token_url);
+
+        if (!$result) {
+
+            $this->logger->error(__FUNCTION__ . ": can't get result");
+            return FALSE;
+        }
+
+        $json_data = json_decode($result);
+
+        if($json_data->errcode != 0) {
+
+            $this->logger->error(__FUNCTION__ . ": errcode @error and errmsg @errmsg",
+                array(
+                    '@error' => $json_data->errcode,
+                    '@errmsg' => $json_data->errmsg
+                )
+            );
+            return false;
+        }
+
+        return $json_data->ticket;
     }
 
     /**
@@ -265,7 +292,7 @@ class WechatApiService {
                 $response = new RedirectResponse($redirect_40029_req_url);
                 $response->send();
                 return null;
-            } else if ($json_value->errcode == "40163" && preg_match('/code been used/', $json_value->errmsg)) {
+            } elseif ($json_value->errcode == "40163" && preg_match('/code been used/', $json_value->errmsg)) {
                 //if 40163 happend, same like 40029 
                 //resend oauth2 redirect ulr to this page, then ok. don't forget drupal_exit :)
                 $this->logger->info($watchdog_title . ": redirect 40163 error");
@@ -277,7 +304,7 @@ class WechatApiService {
                     '@SNSAPI' => $scope,
                     '@STATE' => $state))->render();
 
-                $response = new RedirectResponse($redirect_40029_req_url);
+                $response = new RedirectResponse($redirect_40163_req_url);
                 $response->send();
                 return null;
             } else {
@@ -287,7 +314,7 @@ class WechatApiService {
                     '@errmsg' => $json_value->errmsg,
                     '@line' => __LINE__,
                     '@filename' => __FILE__,
-                    ),
+                    )
                 );
 
                 return null;
@@ -307,30 +334,29 @@ class WechatApiService {
 
         $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get oauth2 user info');
         //get user info
-        $req_url = t( $api_interface, array(
-            '@ACCESS_TOKEN' => $json_value->access_token,
+        $req_url = t( $api_interface, array('@ACCESS_TOKEN' => $json_value->access_token,
             '@OPENID' => $json_value->openid))->render();
 
         $result = $this->wechat_php_curl_https_get($req_url);
         if ($result == Null) {
-            $this->logger->error($watchdog_title . ": error: get user info return null in @line line:@filename'", 
+            $this->logger->error($watchdog_title . ": error: get user info return null in @line line:@filename", 
                 array(
                 '@line' => __LINE__,
                 '@filename' => __FILE__,
-                ),
+                )
             );
             return null;
         }
 
         $json_value = json_decode($result);
-        if(isset($json_value->errcode)){
+        if(isset($json_value->errcode)) {
             $this->logger->error($watchdog_title . ": can not get wechat user info code: @error and errmsg: @errmsg at @line in @filename", 
                 array(
                 '@error' => $json_value->errcode,
                 '@errmsg' => $json_value->errmsg,
                 '@line' => __LINE__,
                 '@filename' => __FILE__,
-                ),
+                )
             );
             return null;
         }
@@ -348,6 +374,7 @@ class WechatApiService {
     //"privilege":[ "PRIVILEGE1" "PRIVILEGE2"     ],    
     // "unionid": "o6_bmasdasdsad6_2sgVt7hMZOPfL" 
     //} 
+
         return $json_value;
     }
 
@@ -366,7 +393,33 @@ class WechatApiService {
 
     public function recv_event_user_subscribe($recvMsg) {
         $openID = $recvMsg['FromUserName'];
-        $this->logger->notice(__FUNCTION__ . ": openID @openid subscribe", array('@openid' => $openID));
+        //$this->logger->notice(__FUNCTION__ . ": openID @openid subscribe", array('@openid' => $openID));
+        if(!empty($recvMsg['EventKey'])) {  //通过二维码扫码加关注
+            /**
+             * User subscrib by scan bar code, eventkey is qrscene_ plus scene number
+             * <xml><ToUserName><![CDATA[toUser]]></ToUserName>
+             * <FromUserName><![CDATA[FromUser]]></FromUserName>
+             * <CreateTime>123456789</CreateTime>
+             * <MsgType><![CDATA[event]]></MsgType>
+             * <Event><![CDATA[subscribe]]></Event>
+             * <EventKey><![CDATA[qrscene_123123]]></EventKey>
+             * <Ticket><![CDATA[TICKET]]></Ticket>
+             * </xml>
+             */
+            $this->wechat_subscribe_event($recvMsg, $recvMsg['EventKey']); 
+            $this->logger->notice(__FUNCTION__ . ": subscribe EventKey @data", array('@data' => $recvMsg['EventKey']));
+        } else {    //通过微信关注
+            /**
+             * <xml>
+             * <ToUserName><![CDATA[toUser]]></ToUserName>
+             * <FromUserName><![CDATA[FromUser]]></FromUserName>
+             * <CreateTime>123456789</CreateTime>
+             * <MsgType><![CDATA[event]]></MsgType>
+             * <Event><![CDATA[subscribe]]></Event>
+             * </xml>
+             */
+            $this->wechat_subscribe_event($recvMsg); 
+        }
 
         return 'success';
     }
@@ -376,12 +429,22 @@ class WechatApiService {
         $openID = $recvMsg['FromUserName'];
         $this->logger->notice(__FUNCTION__ . ": openID @openid unsubscribe", array('@openid' => $openID));
 
+        $uid = $this->check_userid_exists($openID);
+        if ( $uid ) {
+            //set unsubscribe time and unsubscribe status
+            //$this->logger->notice(__FUNCTION__ . ": uid=<pre>@data</pre>", array('@data' => print_r($uid, true)) );
+            $user = User::load($uid);
+            $user->field_wechat_subscribe = false;
+            $user->field_unsubscribe_time = time();
+            $user->save();
+        }
+
         return 'success';
     }
 
     public function recv_event_view_msg_callback($recvMsg) {
         $openID = $recvMsg['FromUserName'];
-        $this->logger->notice(__FUNCTION__ . ": openID @openid unsubscribe", array('@openid' => $openID));
+        //$this->logger->notice(__FUNCTION__ . ": openID @openid unsubscribe", array('@openid' => $openID));
 
         return 'success';
     }
@@ -392,6 +455,55 @@ class WechatApiService {
         //$this->logger->notice(__FUNCTION__ . ": user text @data", array('@data' => $content));
 
         return 'success';
+    }
+
+
+    protected function wechat_subscribe_event($recvMsg, $scene_str = '') {
+        $openID = $recvMsg['FromUserName'];
+        $uid = $this->check_userid_exists($openID);
+        if ( !$uid ) {
+            //create new user 
+            $this->create_new_wechat_user($recvMsg, $openID);
+
+            if ( !empty($scene_str) ) { //handle qrcode scene event
+            }
+        } else {
+            //update user field_wechat_subscribe status
+            //$this->logger->notice(__FUNCTION__ . ": uid=<pre>@data</pre>", array('@data' => print_r($uid, true)) );
+            $user = User::load($uid);
+            $user->field_wechat_subscribe = TRUE;
+            $user->save();
+        }
+
+    }
+
+    public function check_userid_exists($openid) {
+        $ids = \Drupal::entityQuery('user')
+                ->condition('field_wechat_openid', $openid)
+                ->execute();
+        return reset($ids); //return first id or false if $ids is empty
+    }
+
+    protected function create_new_wechat_user($recvMsg, $openID) {
+        $user = User::create();
+
+        $md5openID = md5($openID);
+
+        $user->setPassword(strrev($md5openID));   //reverse md5 openid
+        $user->enforceIsNew();
+        $user->setEmail('user@gmail.com');
+        //This username must be unique and accept only a-Z,0-9, - _ @ .
+        $user->setUsername('tmp_' . $md5openID);
+        $user->field_subscribe_time = time();
+        $user->field_wechat_openid = $openID;
+        $user->field_openid_md5 = $md5openID;
+        $user->field_wechat_subscribe = TRUE;
+
+        $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+        $user->set("langcode", $language);
+        $user->set("preferred_langcode", $language);
+        $user->save();
+
     }
 
 }

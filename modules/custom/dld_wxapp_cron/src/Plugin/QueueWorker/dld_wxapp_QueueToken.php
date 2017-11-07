@@ -82,18 +82,29 @@ class dld_wxapp_QueueToken extends QueueWorkerBase implements ContainerFactoryPl
         if(time() >= $data['lastrun'] + $data['interval']) {
 
             //$this->logger->get('dld_wxapp_QueueToken')->notice('execute access token');
-
+            //get wechat access token
             if ( $access_token = $this->wechatApi->get_access_token() ) {
                 //return token
                 $config = $this->configFactory->getEditable('dld.wxapp.config');
                 $config->set('access_token', $access_token)->save();
                 
-                //set token value to node 15
+                //set token value to node 1
                 $entity = \Drupal::entityManager()->getStorage('node')->load(1);
                 $entity->field_text1->value = $access_token;
                 $entity->save();
             }
 
+            //get wechat jsapi ticket
+            if ( $js_ticket = $this->wechatApi->get_jsapi_ticket() ) {
+                //return token
+                $config = $this->configFactory->getEditable('dld.wxapp.config');
+                $config->set('jsapi_ticket', $js_ticket)->save();
+                
+                //set token value to node 1
+                $entity = \Drupal::entityManager()->getStorage('node')->load(1);
+                $entity->field_js_api_ticket->value = $js_ticket;
+                $entity->save();
+            }
             // Set last run execute time.
             $config = $this->configFactory->getEditable('dld_wxapp_cron.settings');
             //$config = \Drupal::service('config.factory')->getEditable('dld_wxapp_cron.settings');

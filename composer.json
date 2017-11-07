@@ -15,7 +15,8 @@
         "drupal/field_group": "^1.0@RC",
         "drupal/views_bootstrap": "^3.0",
         "drupal/devel": "^1.2",
-        "drupal/pathauto": "^1.0"
+        "drupal/pathauto": "^1.0",
+        "drupal/restui": "^1.15"
     },
     "replace": {
         "drupal/core": "^8.4"

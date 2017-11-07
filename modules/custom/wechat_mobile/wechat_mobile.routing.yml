@@ -1,20 +1,27 @@
 wechat.mobile.createleaf:
-    path: 'wechat-mobile/create-leaf'
+    path: '/wechat-mobile/create-leaf'
     defaults:
         _controller: '\Drupal\wechat_mobile\Controller\WechatMobileController::CreateLeafPage'
     requirements:
         _access: 'TRUE'
 
 wechat.mobile.hotel.main.page:
-    path: 'wechat-mobile/hotel-main-page'
+    path: '/wechat-mobile/hotel-main-page/{nid}'
     defaults:
         _controller: '\Drupal\wechat_mobile\Controller\WechatMobileController::HotelMainPage'
     requirements:
         _access: 'TRUE'
 
-wechat.mobile.test.render:
-    path: 'wechat/mobile/test/render'
+wechat.mobile.hotel.create.page:
+    path: '/wechat-mobile/hotel-create-page'
     defaults:
-        _controller: '\Drupal\wechat_mobile\Controller\WechatMobileController::GetRender'
+        _controller: '\Drupal\wechat_mobile\Controller\WechatMobileController::HotelCreatePage'
+    requirements:
+        _access: 'TRUE'
+
+wechat.mobile.jsapi.config:
+    path: '/wechat-mobile/jsapi-config'
+    defaults:
+        _controller: '\Drupal\wechat_mobile\Controller\WechatMobileController::JSApiConfig'
     requirements:
         _access: 'TRUE'
