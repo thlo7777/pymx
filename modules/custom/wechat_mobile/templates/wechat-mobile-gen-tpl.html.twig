@@ -63,6 +63,10 @@
             //alert(window.location.protocol + "//" + window.location.hostname + "/403-jujuefangwen");
             //window.location.replace(window.location.protocol + "//" + window.location.hostname + "/403-jujuefangwen");
         }
+
+        {% if page['js_var'] %} 
+            var jsObj = JSON.parse( '{{ page.js_var | json_encode(JSON_UNESCAPED_UNICODE) | escape('js') }} ');
+        {% endif %}
     </script>
 
     {# protect code only used touch device #}

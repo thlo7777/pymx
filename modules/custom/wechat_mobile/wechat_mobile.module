@@ -45,6 +45,10 @@ define('AMAP_JS_REST_API', 'https://webapi.amap.com/maps?v=1.4.1');
 define('AMAP_UI_COMPONENTS', 'https://webapi.amap.com/ui/1.0/main.js');
 
 /**
+ * image file save path
+ **/
+define('HOTEL_IMAGE_PATH', '客栈图片信息/');
+/**
  * Implement Hook_theme for wechat mobile
  **/
 function wechat_mobile_theme($existing, $type, $theme, $path) {

@@ -412,6 +412,7 @@
                         'previewImage',
                         'uploadImage',
                         'downloadImage',
+                        'getLocalImgData',
                         'getNetworkType',
                         'openLocation',
                         'getLocation',
@@ -520,9 +521,57 @@
             });
         },
 
-        dld_get_restful_url: function() {
-            base_url = 'https://dld.dreamland360.com/menu-dld-restful/dld-restful-api';
-            return base_url;
+        wechat_rest_ajax: function(ajax_type, api_uri, abc, json_data, call_back, target_page, fun_name) {
+
+            if (ajax_type == "GET") {
+                request = $.ajax({
+                    cache: false,
+                    headers: {
+                        "cache-control": "no-cache",
+                        "Authorization": "Basic " + abc
+                    },
+                    url: api_uri,
+                    method: "GET",
+                    data: json_data //for GET
+                });
+            } else if (ajax_type == "POST"){
+                request = $.ajax({
+                    cache: false,
+                    headers: {
+                        "cache-control": "no-cache",
+                        "Authorization": "Basic " + abc,
+                        "Content-Type": "application/hal+json"
+                    },
+                    url: api_uri,
+                    method: "POST",
+                    data: JSON.stringify(json_data),  //for POST
+                });
+            } else {
+                return false;
+            }
+
+            request.retry({times:3, timeout:1000}).then(function(data) {
+
+                if (typeof(data) === "undefined") {
+                    alert("error: " + fun_name + " 结果未定义");
+                } else {
+                    if (data === null || data.length == 0) {
+                        alert("error: " + fun_name + " 结果为空");
+                    } else {
+                        //console.log(data);
+                        if (call_back !== null) {
+                            call_back(data.data, target_page);
+                        }
+                    }
+                }
+            });
+
+            request.fail(function(jqXHR, textStatus, errorThrown) {
+
+                if (jqXHR.status != "200") {
+                    alert(fun_name + " connected server error: " + jqXHR.status + " " + jqXHR.statusText);
+                }
+            });
         },
 
         //dld ajax interface
@@ -532,12 +581,16 @@
 
             if (ajax_type == "GET") {
                 request = $.ajax({
+                    cache: false,
+                    headers: { "cache-control": "no-cache" },
                     url: base_url,
                     method: "GET",
                     data: {data: json_data} //for GET
                 });
             } else if (ajax_type == "POST"){
                 request = $.ajax({
+                    cache: false,
+                    headers: { "cache-control": "no-cache" },
                     url: base_url,
                     method: "POST",
                     data: JSON.stringify(json_data),  //for POST

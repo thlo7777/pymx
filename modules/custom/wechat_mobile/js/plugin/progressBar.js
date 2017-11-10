@@ -70,9 +70,7 @@
     $.fn.openModal = function() {
         plugin = this.data('plugin_' + pluginName);
         var opts = plugin.options;
-        console.log(opts);
 
-        console.log($(opts.modalID));
         $(opts.modalID).modal({
             backdrop: opts.backdrop,
             show: opts.show
@@ -83,6 +81,15 @@
     $.fn.setProgress = function(value) {
         $('#form-upload-progress').css({'width': value.width});
         $('.progress-completed').html(value.per);
+    }
+
+    $.fn.closeModal = function() {
+        plugin = this.data('plugin_' + pluginName);
+        var opts = plugin.options;
+
+        setTimeout(function(){
+            $(opts.modalID).modal('hide');
+        }, 500);
     }
 
 

@@ -16,7 +16,8 @@
         "drupal/views_bootstrap": "^3.0",
         "drupal/devel": "^1.2",
         "drupal/pathauto": "^1.0",
-        "drupal/restui": "^1.15"
+        "drupal/restui": "^1.15",
+        "drupal/console": "~1.0"
     },
     "replace": {
         "drupal/core": "^8.4"

@@ -1,0 +1,5 @@
+name: wechat rest
+type: module
+description: wechat rest service
+core: 8.x
+package: Custom

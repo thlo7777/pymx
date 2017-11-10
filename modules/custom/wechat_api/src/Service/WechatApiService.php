@@ -264,7 +264,7 @@ class WechatApiService {
         $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get oauth2 access_token');
         $appID = $this->configFactory->get('dld.wxapp.config')->get('AppID');
         $appSec = $this->configFactory->get('dld.wxapp.config')->get('AppSecret');
-        $req_url = t( $api_interface, array('@APPID' => $token, '@APPSECRET' => $appSec, '@CODE' => $code) )->render();
+        $req_url = t( $api_interface, array('@APPID' => $appID, '@APPSECRET' => $appSec, '@CODE' => $code) )->render();
 
         $result = $this->wechat_php_curl_https_get($req_url);
 
@@ -284,7 +284,7 @@ class WechatApiService {
 
                 $api_interface = $this->configFactory->get('dld.wxapp.config')->get('oauth2 redirect request');
                 $redirect_40029_req_url = t( $api_interface, array(
-                    '@APPID' => $token,
+                    '@APPID' => $appID,
                     '@URL' => $url,
                     '@SNSAPI' => $scope,
                     '@STATE' => $state))->render();
@@ -299,7 +299,7 @@ class WechatApiService {
 
                 $api_interface = $this->configFactory->get('dld.wxapp.config')->get('oauth2 redirect request');
                 $redirect_40163_req_url = t( $api_interface, array(
-                    '@APPID' => $token,
+                    '@APPID' => $appID,
                     '@URL' => $url,
                     '@SNSAPI' => $scope,
                     '@STATE' => $state))->render();
@@ -376,6 +376,40 @@ class WechatApiService {
     //} 
 
         return $json_value;
+    }
+
+    /**
+     * get temp media from wechat
+     **/
+    public function wechat_api_get_temp_media($save_path, $media_id) {
+        $file_name = null;
+
+        $api_interface = $this->configFactory->get('dld.wxapp.config')->get('get temp media id');
+        $token = $this->configFactory->get('dld.wxapp.config')->get('access_token');
+        $token_url = t( $api_interface, array( '@ACCESS_TOKEN' => $token, '@MEDIA_ID' => $media_id) )->render();
+
+        $result = $this->wechat_php_curl_https_get($token_url, true);
+
+        if (!$result) {
+            $this->logger->error(__FUNCTION__ . ": can't get result");
+            return $file_name;
+        }
+
+        list($header, $body) = explode("\r\n\r\n", $result, 2);
+
+        preg_match('@Content-disposition[ \t]*:[ \t]*attachment[ \t]*;[ \t]*filename[ \t]*=[ \t]*\".*\"@i', $header, $matches);
+        preg_match('@\".*\"@i', $matches[0], $filename);
+        $filename = trim($filename[0], '"');
+
+       //watchdog('wechat_api_get_temp_media', '$filename = <pre>@data</pre>', array('@data' => print_r($filename, TRUE)));
+
+        $destination = $save_path . "/" . $filename;
+        $filename = file_unmanaged_save_data($body, $destination, FILE_EXISTS_RENAME);
+
+        return $filename;
+
+
+
     }
 
     /**
@@ -477,6 +511,13 @@ class WechatApiService {
 
     }
 
+    public function get_userid_bymd5($md5openid) {
+        $ids = \Drupal::entityQuery('user')
+                ->condition('field_wechat_openid', $openid)
+                ->execute();
+        return reset($ids); //return first id or false if $ids is empty
+    }
+
     public function check_userid_exists($openid) {
         $ids = \Drupal::entityQuery('user')
                 ->condition('field_wechat_openid', $openid)
@@ -502,6 +543,7 @@ class WechatApiService {
         $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
         $user->set("langcode", $language);
         $user->set("preferred_langcode", $language);
+        $user->activate();
         $user->save();
 
     }
